@@ -53,7 +53,7 @@ public class WordService
         }
         catch (Exception)
         {
-            throw new WordNotFoundExcption("Não foi possível encontrar a palavra.");
+            throw new WordNotFoundExcption("Não foi possível encontrar a palavra ou ela está escrita de forma errada.");
         }
         
     }

@@ -14,7 +14,7 @@ var app = builder.Build();
 app.UseHttpsRedirection();
 
 
-app.MapGet("/", () => Results.Ok(new { message = "Funcionando!" }));
+app.MapGet("/", () => Results.Ok(new { status = "Sucesso", data = "Funcionando!" }));
 
 app.MapGet("/{word:alpha}", async (string word) =>
 {
@@ -23,7 +23,10 @@ app.MapGet("/{word:alpha}", async (string word) =>
         var wordService = new WordService();
         var response = await wordService.GetWordDescriptionAsync(word.ToLower());
 
-        return Results.Ok(new { status = "Sucesso", data = response });
+        if (response is not null)
+            return Results.Ok(new { status = "Sucesso", data = response });
+
+        return Results.NotFound(new { status = "Erro", data = "Não foi possível encontrar a palavra." });
     }
     catch (WordNotFoundExcption ex)
     {
