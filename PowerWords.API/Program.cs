@@ -1,3 +1,4 @@
+using PowerWords.API.Exceptions;
 using PowerWords.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +18,17 @@ app.MapGet("/", () => Results.Ok(new { message = "Funcionando!" }));
 
 app.MapGet("/{word:alpha}", async (string word) =>
 {
-    var wordService = new WordService();
+    try
+    {
+        var wordService = new WordService();
+        var response = await wordService.GetWordDescriptionAsync(word.ToLower());
 
-    return Results.Ok(await wordService.GetWordDescriptionAsync(word.ToLower()));
+        return Results.Ok(new { status = "Sucesso", data = response });
+    }
+    catch (WordNotFoundExcption ex)
+    {
+        return Results.NotFound(new { status = "Erro", data = ex.Message });
+    }
 });
 
 app.Run();

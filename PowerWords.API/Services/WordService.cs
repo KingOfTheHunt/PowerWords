@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using PowerWords.API.Entities;
+using PowerWords.API.Exceptions;
 
 namespace PowerWords.API.Services;
 
@@ -18,34 +19,42 @@ public class WordService
     // dados: palavra, classe gramatical, significados e a etimologia.
     public async Task<WordDescription> GetWordDescriptionAsync(string word)
     {
-        var htmlContent = await _httpClient.GetStringAsync($"{_httpClient.BaseAddress}/{word}");
-
-        var document = new HtmlDocument();
-        document.LoadHtml(htmlContent);
-
-        var paragraph = document.DocumentNode.SelectSingleNode("//p[@class='significado textonovo']");
-        var meanings = new List<string>();
-
-        if (paragraph is not null)
+        try
         {
-            var spans = paragraph.SelectNodes(".//span");
+            var htmlContent = await _httpClient.GetStringAsync($"{_httpClient.BaseAddress}/{word}");
 
-            for (int i = 1; i < spans.Count - 1; i++)
+            var document = new HtmlDocument();
+            document.LoadHtml(htmlContent);
+
+            var paragraph = document.DocumentNode.SelectSingleNode("//p[@class='significado textonovo']");
+            var meanings = new List<string>();
+
+            if (paragraph is not null)
             {
-                if (spans[i].InnerText.StartsWith("[") && spans[i].InnerText.EndsWith("]"))
-                    continue;
+                var spans = paragraph.SelectNodes(".//span");
 
-                meanings.Add(spans[i].InnerText);
+                for (int i = 1; i < spans.Count - 1; i++)
+                {
+                    if (spans[i].InnerText.StartsWith("[") && spans[i].InnerText.EndsWith("]"))
+                        continue;
+
+                    meanings.Add(spans[i].InnerText);
+                }
+
+                return new WordDescription(
+                        word,
+                        spans[0].InnerText,
+                        [.. meanings],
+                        spans.LastOrDefault().InnerText
+                    );
             }
 
-            return new WordDescription(
-                    word,
-                    spans[0].InnerText,
-                    [.. meanings],
-                    spans.LastOrDefault().InnerText
-                );
+            return null;
         }
-
-        return null;
+        catch (Exception)
+        {
+            throw new WordNotFoundExcption("Não foi possível encontrar a palavra.");
+        }
+        
     }
 }
